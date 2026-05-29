@@ -86,7 +86,7 @@ kubectl auth can-i delete secrets --as=system:serviceaccount:my-ns:my-sa -n my-n
 
 A clean `auth can-i --list` showing only the intended verbs, and a `no` on step 4, means the generated rule grants exactly what the workload uses and denies the rest.
 
-> **No bundled sample workload yet.** redis-companion ships an `examples/sample-service/` you can run end-to-end; the equivalent here — a tiny controller-runtime workload plus a kind-cluster apply/verify loop — is on the [What's next](#whats-next) list. For now, run the plugin against your own workload.
+> **Try the bundled sample.** [`examples/sample-controller/`](examples/sample-controller/) is a `client-go` workload that exercises a realistic spread — `pods` (list/watch) + `pods/log`, named ConfigMap/Secret reads (→ `resourceNames`), `deployments` + `deployments/scale`, event recording, and a leader-election `lease` — plus a `// TODO` speculation candidate. Run `/k8s-rbac-companion:rule examples/sample-controller` and follow its README to apply + verify against a cluster.
 
 ## Optional: connect a Kubernetes MCP for live verification
 
@@ -217,7 +217,7 @@ A few portable, non-obvious decisions:
 
 In rough priority order:
 
-- **Bundled sample workload + kind-cluster demo loop** — a tiny controller-runtime (or client-go) workload plus an apply/`auth can-i`/negative-test script, so the plugin can be exercised end-to-end out of the box (the `examples/sample-service/` analog).
+- **Make the bundled sample runnable end-to-end** — [`examples/sample-controller/`](examples/sample-controller/) is currently a read target; vendoring its deps (`go mod tidy`) and adding a kind-deploy step would let it actually run *under* the generated rule, closing the apply→run→observe loop.
 - **Derive `api-resource-map.md` from a live cluster per version** — a `build-api-resource-map.py` that runs `kubectl api-resources -o wide` and emits the map, the way the reference project derives its category map from upstream source. Keeps the offline fallback honest and regenerable.
 - **Broaden + ground client-library coverage** — add Java (`fabric8`/official), Rust, and .NET, and replace the "method ≈ verb" convention + hand-curated caveats with mappings derived from each library's source or generated API reference.
 - **Runtime-observed mode** — infer the rule from what the workload *actually does*, not just code-reading: capture API calls via the Audit log or an `audit2rbac`-style trace, and diagnose `Forbidden` denials against an existing role. Catches dynamic/conditional access that static analysis misses.

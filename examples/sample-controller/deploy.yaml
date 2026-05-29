@@ -1,0 +1,41 @@
+# Deploy manifest for the sample workload. The ServiceAccount here is what the
+# generated RoleBinding subjects to; the Deployment runs as that SA. Apply this
+# BEFORE applying the generated rbac-sample-controller.yaml.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sample-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sample-controller
+  namespace: sample-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-controller
+  namespace: sample-system
+  labels:
+    app: sample-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-controller
+  template:
+    metadata:
+      labels:
+        app: sample-controller
+    spec:
+      serviceAccountName: sample-controller
+      containers:
+        - name: controller
+          image: ghcr.io/example/sample-controller:latest
+          env:
+            # Downward API → main.go reads this as its operating namespace.
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
