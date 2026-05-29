@@ -2,9 +2,9 @@
 """credential-guard — PreToolUse hook for the k8s-rbac-companion plugin.
 
 Reads a Claude Code hook payload from stdin, scans Write/Edit/MultiEdit content
-for literal Kubernetes credentials (ServiceAccount/OIDC bearer JWTs, kubeconfig
-token: fields, embedded client-key-data / client-certificate-data blobs), and
-blocks the write if a real credential is found.
+(and Bash command strings) for literal Kubernetes credentials (ServiceAccount/
+OIDC bearer JWTs, kubeconfig token: fields, embedded client-key-data /
+client-certificate-data blobs), and blocks the write/command if one is found.
 
 Recognized placeholders (e.g., <changeme>, ${VAR}, $SA_TOKEN, ALL_CAPS names)
 are allowed through — they're how the agent's own output is structured.
@@ -128,6 +128,14 @@ def main() -> int:
     elif tool_name == "MultiEdit":
         for edit in tool_input.get("edits", []):
             contents.append(edit.get("new_string", ""))
+    elif tool_name == "Bash":
+        # Heredocs/redirects (`cat > kubeconfig <<EOF ... token: ... EOF`) and
+        # inline credential flags (`--token=eyJ...`) write secrets to disk
+        # without touching the Write/Edit primitives. Best-effort: the two
+        # YAML-anchored patterns fire on heredoc-body lines; the JWT pattern
+        # catches inline tokens. Opaque non-JWT bearer tokens passed inline are
+        # not caught (documented in the README).
+        contents.append(tool_input.get("command", ""))
     else:
         return 0
 
@@ -139,9 +147,12 @@ def main() -> int:
     if not findings:
         return 0
 
-    file_path = tool_input.get("file_path", "(unknown path)")
+    if tool_name == "Bash":
+        target = "run this Bash command"
+    else:
+        target = f"write {tool_input.get('file_path', '(unknown path)')}"
     sys.stderr.write(
-        f"\ncredential-guard: refused to write {file_path}\n\n"
+        f"\ncredential-guard: refused to {target}\n\n"
         f"Detected literal Kubernetes credential(s) in the content:\n\n"
         + "\n".join(findings)
         + "\n\nBest practice: load Kubernetes credentials from a kubeconfig "

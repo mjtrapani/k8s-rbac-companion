@@ -167,7 +167,7 @@ Worth calling out: the synthesis prompt's hardest instruction is *"look up the a
 
 ### Hook: `credential-guard`
 
-PreToolUse hook on `Write`/`Edit`/`MultiEdit`, in `hooks/`. Scans every file write for literal Kubernetes credentials and blocks the write if found:
+PreToolUse hook on `Write`/`Edit`/`MultiEdit`/`Bash`, in `hooks/`. Scans every file write — and every Bash command string — for literal Kubernetes credentials and blocks it if found:
 
 - ServiceAccount / OIDC bearer JWTs (`eyJ…` three-segment tokens)
 - kubeconfig `token:` fields with a literal value
@@ -178,7 +178,7 @@ Recognized placeholders pass through: `<changeme>`, `${SA_TOKEN}`, `$SA_TOKEN`, 
 **A nuance specific to this domain:** the artifact the plugin generates — a `Role`/`ClusterRole` + binding — is **credential-free by construction**; a binding references a ServiceAccount by name, with no token anywhere. So unlike redis-companion (whose hook exists to let the agent's own `<changeme>` placeholder through), this hook rarely interacts with the agent's output at all. Its real job is the project-level invariant that **no real Kubernetes credential gets written to disk via Claude in this repo** — guarding against a user asking Claude to "just save my kubeconfig here," prompt injection, or model drift — regardless of who's driving the session.
 
 **What the hook doesn't cover** (honest scope):
-- **Disk writes only, not prompt output.** It intercepts `Write`/`Edit`/`MultiEdit`; text Claude streams into the conversation isn't scanned.
+- **Best-effort for shell, and not prompt output.** It scans `Write`/`Edit`/`MultiEdit` content *and* `Bash` command strings (catching heredoc/redirect credential writes and inline `eyJ…` JWT flags) — but shell coverage is best-effort: an opaque (non-JWT) bearer token passed inline, or an obfuscated command, can still slip through. Text Claude streams into the conversation isn't scanned at all.
 - **Low-entropy values pass through.** The allow-list contains `password`, `secret`, `xxx`, etc. — necessary to avoid blocking docstring examples, but a real token that happens to equal `secret` won't be caught.
 - **New content only.** It scans the content being written, not credentials already on disk.
 - **Not `certificate-authority-data`** — that's the public CA cert, not a secret, and is deliberately allowed.
