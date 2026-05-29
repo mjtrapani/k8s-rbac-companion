@@ -1,0 +1,17 @@
+{
+  "name": "k8s-rbac-companion",
+  "description": "Generates a least-privilege Kubernetes RBAC manifest — a Role/ClusterRole plus a matching binding — scoped to exactly the API groups, resources, and verbs your workload actually uses. For platform and app engineers locking down a workload's ServiceAccount: reads the code, infers the API access patterns, emits annotated YAML.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Marko Trapani"
+  },
+  "license": "MIT",
+  "mcpServers": {
+    "kubernetes": {
+      "command": "npx",
+      "args": [
+        "mcp-server-kubernetes@latest"
+      ]
+    }
+  }
+}
