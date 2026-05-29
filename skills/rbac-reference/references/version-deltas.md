@@ -1,6 +1,6 @@
 # Version deltas
 
-**Read this honesty note first.** In command-versioned systems, the *permission grammar itself* shifts between versions, so version filtering is load-bearing. **Kubernetes RBAC is the opposite:** the rule grammar (`apiGroups`/`resources`/`verbs`/`resourceNames`/`nonResourceURLs`), the verb set, and the RBAC objects themselves (`rbac.authorization.k8s.io/v1`) have been **stable and GA since k8s 1.17**. A rule you write today is valid on every supported cluster.
+**Read this honesty note first.** In command-versioned systems, the *permission grammar itself* shifts between versions, so version filtering is load-bearing. **Kubernetes RBAC is the opposite:** the rule grammar (`apiGroups`/`resources`/`verbs`/`resourceNames`/`nonResourceURLs`), the verb set, and the RBAC objects themselves (`rbac.authorization.k8s.io/v1`) have been **stable and GA since k8s 1.8**. A rule you write today is valid on every supported cluster.
 
 What *is* version-sensitive is narrower:
 
@@ -20,7 +20,7 @@ So this doc is a *much thinner* concern than version handling is elsewhere. The 
 | **PodDisruptionBudget** | `policy/v1beta1` | `policy/v1` | GA 1.21; beta removed 1.25 | HIGH |
 | **HorizontalPodAutoscaler** | `autoscaling/v1` | `autoscaling/v2` (v1 still served) | v2 GA 1.23 | HIGH — prefer v2 features; the apiGroup `autoscaling` is unchanged either way |
 | **EndpointSlice** | `discovery.k8s.io/v1beta1` | `discovery.k8s.io/v1` | GA 1.21 | MEDIUM |
-| **RBAC objects** (Role/RoleBinding/ClusterRole/ClusterRoleBinding) | — (always v1) | `rbac.authorization.k8s.io/v1` | GA since **1.17** | HIGH — **no migration; stable** |
+| **RBAC objects** (Role/RoleBinding/ClusterRole/ClusterRoleBinding) | — (always v1) | `rbac.authorization.k8s.io/v1` | GA since **1.8** | HIGH — **no migration; stable** |
 
 ## How this affects a generated rule
 
